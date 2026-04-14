@@ -1,0 +1,82 @@
+{
+  "": {
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/master.swiftdeps"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/AppDelegate.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/AppDelegate.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/AppDelegate.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/AppDelegate~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/AppDelegate.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/AppDelegate.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/FileUtils.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FileUtils.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FileUtils.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FileUtils~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FileUtils.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FileUtils.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/FolderConfiguration.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderConfiguration.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderConfiguration.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderConfiguration~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderConfiguration.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderConfiguration.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/FolderSettingsView.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderSettingsView.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderSettingsView.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderSettingsView~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderSettingsView.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/FolderSettingsView.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/KeyboardShortcutManager.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/KeyboardShortcutManager.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/KeyboardShortcutManager.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/KeyboardShortcutManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/KeyboardShortcutManager.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/KeyboardShortcutManager.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/MenuBuilder.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/MenuBuilder.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/MenuBuilder.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/MenuBuilder~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/MenuBuilder.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/MenuBuilder.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/QuickfilesApp.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/QuickfilesApp.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/QuickfilesApp.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/QuickfilesApp~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/QuickfilesApp.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/QuickfilesApp.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/SettingsManager.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsManager.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsManager.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsManager.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsManager.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/SettingsView.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsView.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsView.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsView~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsView.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsView.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/SettingsWindowController.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsWindowController.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsWindowController.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsWindowController~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsWindowController.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/SettingsWindowController.dia"
+  },
+  "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/Sources/StatusItemManager.swift": {
+    "dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/StatusItemManager.d",
+    "object": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/StatusItemManager.swift.o",
+    "swiftmodule": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/StatusItemManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/StatusItemManager.swiftdeps",
+    "diagnostics": "/Users/samson/Desktop/LyncLab/Utility/Quickfiles/.build/arm64-apple-macosx/debug/Quickfiles.build/StatusItemManager.dia"
+  }
+}
