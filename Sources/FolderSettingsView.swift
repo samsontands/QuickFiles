@@ -228,12 +228,6 @@ struct FolderSettingsView: View {
         )
     }
 
-    private func abbreviatePath(_ path: String) -> String {
-        if let home = ProcessInfo.processInfo.environment["HOME"], path.hasPrefix(home) {
-            return "~" + path.dropFirst(home.count)
-        }
-        return path
-    }
 }
 
 // MARK: - Keyboard Shortcut Recorder

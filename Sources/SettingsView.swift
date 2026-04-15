@@ -152,10 +152,11 @@ struct SettingsView: View {
         settings.moveFolder(fromOffsets: offsets, toOffset: destination)
     }
 
-    private func abbreviatePath(_ path: String) -> String {
-        if let home = ProcessInfo.processInfo.environment["HOME"], path.hasPrefix(home) {
-            return "~" + path.dropFirst(home.count)
-        }
-        return path
+}
+
+func abbreviatePath(_ path: String) -> String {
+    if let home = ProcessInfo.processInfo.environment["HOME"], path.hasPrefix(home) {
+        return "~" + path.dropFirst(home.count)
     }
+    return path
 }

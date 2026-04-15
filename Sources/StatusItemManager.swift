@@ -34,6 +34,24 @@ final class StatusItemManager: NSObject {
                 }
             }
             .store(in: &cancellables)
+
+        // Refresh status bar icons when display configuration changes (e.g. connecting a monitor)
+        NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    self.reconfigureAllItems()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private func reconfigureAllItems() {
+        for folder in settingsManager.folders {
+            if let item = statusItems[folder.id] {
+                configure(item: item, with: folder)
+            }
+        }
     }
 
     private func rebuildStatusItems(with folders: [FolderConfiguration]) {
@@ -83,6 +101,7 @@ final class StatusItemManager: NSObject {
             button.image = folder.statusImage
         }
 
+        button.contentTintColor = folder.nsColor
         button.imagePosition = folder.displayMode == .icon ? .imageOnly : .imageLeading
         button.toolTip = folder.path
     }
@@ -116,7 +135,6 @@ final class StatusItemManager: NSObject {
         }
 
         let menu = menuBuilder.buildMenu(for: folder)
-        menu.delegate = menuBuilder
         menuRetention[folderID] = menu
 
         statusItem.menu = menu

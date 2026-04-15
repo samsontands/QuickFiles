@@ -62,7 +62,7 @@ struct FolderConfiguration: Codable, Identifiable, Equatable {
     init(
         id: UUID = UUID(),
         path: String,
-        displayMode: FolderDisplayMode = .iconAndTitle,
+        displayMode: FolderDisplayMode = .icon,
         iconName: String = "folder",
         iconColor: String = "#007AFF",
         title: String? = nil,
@@ -106,23 +106,13 @@ struct FolderConfiguration: Codable, Identifiable, Equatable {
     }
 
     var statusImage: NSImage? {
-        let configuration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
-        let image = NSImage(systemSymbolName: iconName, accessibilityDescription: resolvedTitle)?
-            .withSymbolConfiguration(configuration)
-        image?.isTemplate = false
-
-        guard let image else {
+        let config = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        guard let image = NSImage(systemSymbolName: iconName, accessibilityDescription: resolvedTitle)?
+            .withSymbolConfiguration(config) else {
             return nil
         }
-
-        let tinted = image.copy() as? NSImage
-        tinted?.lockFocus()
-        nsColor.set()
-        let bounds = NSRect(origin: .zero, size: tinted?.size ?? .zero)
-        bounds.fill(using: .sourceAtop)
-        tinted?.unlockFocus()
-        tinted?.isTemplate = false
-        return tinted
+        image.isTemplate = true
+        return image
     }
 }
 

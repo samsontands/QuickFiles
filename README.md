@@ -12,10 +12,12 @@ A macOS menu bar app for browsing folders directly from the menu bar. Inspired b
 - Type to search while the menu is open (native NSMenu behavior)
 
 ### File Browsing
+- Folders listed first, then files (like Finder)
 - Files and folders shown with their system icons (16×16)
 - Folders expand into submenus (lazy-loaded on hover)
 - Click a file to open it in its default app
 - Click a folder to open it in Finder
+- Item count shown at the top of each root menu (e.g. "3 folders, 12 files")
 
 ### File Actions (submenu per file)
 - **Open** — open the file in its default app
@@ -37,7 +39,8 @@ A macOS menu bar app for browsing folders directly from the menu bar. Inspired b
 ### Folder Menu Footer
 - **Open in Finder** — open the folder in Finder
 - **Open in Terminal** — open a new Terminal window at the folder path
-- **Settings…** — open the settings window
+- **Settings...** — open the settings window
+- **Quit Quickfiles** — exit the app
 
 ### Per-Folder Settings
 - **Folder path** with "Change…" button

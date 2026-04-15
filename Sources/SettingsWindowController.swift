@@ -6,11 +6,14 @@ final class SettingsWindowController {
     static let shared = SettingsWindowController()
 
     private var window: NSWindow?
+    private let windowDelegate = SettingsWindowDelegate()
 
     private init() {}
 
     func showSettings() {
-        if let window, window.isVisible {
+        if let window {
+            // Reuse existing window
+            NSApp.setActivationPolicy(.regular)
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
@@ -19,9 +22,6 @@ final class SettingsWindowController {
         let settingsView = SettingsView()
             .frame(minWidth: 860, minHeight: 560)
 
-        let hostingView = NSHostingView(rootView: settingsView)
-        hostingView.translatesAutoresizingMaskIntoConstraints = false
-
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 860, height: 560),
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
@@ -29,29 +29,26 @@ final class SettingsWindowController {
             defer: false
         )
         window.title = "Quickfiles Settings"
-        window.contentView = hostingView
+        window.contentView = NSHostingView(rootView: settingsView)
         window.minSize = NSSize(width: 700, height: 450)
         window.isReleasedWhenClosed = false
         window.center()
-        window.delegate = WindowDelegate.shared
+        window.delegate = windowDelegate
 
         self.window = window
 
-        // Temporarily become a regular app so the window can receive focus
         NSApp.setActivationPolicy(.regular)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    func windowDidClose() {
-        // Go back to accessory mode (no dock icon) after settings closes
+    fileprivate func windowDidClose() {
         NSApp.setActivationPolicy(.accessory)
     }
 }
 
-private final class WindowDelegate: NSObject, NSWindowDelegate {
-    static let shared = WindowDelegate()
-
+@MainActor
+private final class SettingsWindowDelegate: NSObject, NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         SettingsWindowController.shared.windowDidClose()
     }

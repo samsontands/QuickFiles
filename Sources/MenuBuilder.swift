@@ -8,8 +8,6 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
     static let shared = MenuBuilder()
 
     private let dateFormatter: DateFormatter
-    private var eventMonitor: Any?
-    private var activeMenus: [NSMenu] = []
     private var previewWindow: QuickLookFloatingWindow?
 
     private override init() {
@@ -19,25 +17,22 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
         super.init()
     }
 
-    func buildMenu(for folder: FolderConfiguration) -> NSMenu {
-        let menu = NSMenu(title: folder.resolvedTitle)
+    func buildMenu(for folder: FolderConfiguration) -> QuickfilesMenu {
+        let menu = QuickfilesMenu(title: folder.resolvedTitle)
         menu.autoenablesItems = false
         menu.delegate = self
+        menu.menuBuilder = self
         menu.quickfilesContext = MenuContext(url: folder.url, folder: folder, isRoot: true)
+        // Only show placeholder — menuNeedsUpdate will load actual contents when AppKit shows the menu
         populateLoadingState(into: menu)
-        loadContents(for: menu)
         return menu
     }
 
-    func menuWillOpen(_ menu: NSMenu) {
-        activeMenus.append(menu)
-        installEventMonitorIfNeeded()
-    }
-
     func menuDidClose(_ menu: NSMenu) {
-        activeMenus.removeAll { $0 === menu }
-        if activeMenus.isEmpty {
-            removeEventMonitor()
+        // Only dismiss Quick Look when the root menu closes
+        if let ctx = menu.quickfilesContext, ctx.isRoot {
+            previewWindow?.orderOut(nil)
+            previewWindow = nil
         }
     }
 
@@ -47,43 +42,50 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
 
     // MARK: - Quick Look (non-activating floating window)
 
-    private func installEventMonitorIfNeeded() {
-        guard eventMonitor == nil else { return }
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, event.keyCode == 49 /* Space */ else { return event }
-            // Toggle: if preview is already showing, close it
-            if let window = self.previewWindow, window.isVisible {
-                window.orderOut(nil)
-                self.previewWindow = nil
-                return nil
-            }
-            if let url = self.highlightedFileURL() {
-                self.showQuickLook(for: url)
-                return nil
-            }
-            return event
+    /// Called by QuickfilesMenu.performKeyEquivalent when Space is pressed during menu tracking.
+    /// Returns true if handled (so the menu stays open).
+    func handleSpaceKey(in menu: NSMenu) -> Bool {
+        // Toggle: if preview is already showing, close it
+        if let window = previewWindow, window.isVisible {
+            window.orderOut(nil)
+            previewWindow = nil
+            return true
         }
+
+        // Find the highlighted file across the menu hierarchy
+        if let url = highlightedFileURL(in: menu) {
+            showQuickLook(for: url)
+            return true
+        }
+
+        return false
     }
 
-    private func removeEventMonitor() {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
+    private func highlightedFileURL(in menu: NSMenu) -> URL? {
+        // Check the deepest visible submenu first
+        for item in menu.items {
+            if item.isHighlighted, let submenu = item.submenu, submenu.numberOfItems > 0 {
+                if let found = highlightedFileURL(in: submenu) {
+                    return found
+                }
+            }
         }
-        previewWindow?.orderOut(nil)
-        previewWindow = nil
-    }
 
-    private func highlightedFileURL() -> URL? {
-        for menu in activeMenus.reversed() {
-            if let item = menu.highlightedItem,
-               let url = item.representedObject as? URL {
+        // Check this menu's highlighted item
+        if let item = menu.highlightedItem {
+            // Custom draggable view items store URL in the view
+            if let dragView = item.view as? DraggableMenuItemView, !dragView.isDirectory {
+                return dragView.fileURL
+            }
+            // Standard menu items store URL in representedObject
+            if let url = item.representedObject as? URL {
                 let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
                 if !isDir {
                     return url
                 }
             }
         }
+
         return nil
     }
 
@@ -93,6 +95,8 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
         }
         previewWindow?.showPreview(for: url)
     }
+
+    // MARK: - Menu Building
 
     private func loadContents(for menu: NSMenu) {
         guard let context = menu.quickfilesContext else {
@@ -107,7 +111,7 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
 
     private func populateLoadingState(into menu: NSMenu) {
         menu.removeAllItems()
-        let item = NSMenuItem(title: "Loading…", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: "Loading\u{2026}", action: nil, keyEquivalent: "")
         item.isEnabled = false
         menu.addItem(item)
     }
@@ -140,9 +144,19 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
                 }
             }
 
-            urls.sort { lhs, rhs in
-                compare(lhs: lhs, rhs: rhs, using: context.folder)
+            // Pre-fetch resource values for sorting to avoid O(n log n) file system calls
+            let sortKeys: Set<URLResourceKey> = [.localizedNameKey, .contentModificationDateKey, .creationDateKey, .typeIdentifierKey, .fileSizeKey, .totalFileAllocatedSizeKey, .isDirectoryKey]
+            var valuesCache: [URL: URLResourceValues] = [:]
+            for url in urls {
+                valuesCache[url] = try? url.resourceValues(forKeys: sortKeys)
             }
+
+            // Folders first, then files — within each group, sort by user preference
+            let folders = urls.filter { valuesCache[$0]?.isDirectory == true }
+                .sorted { compare(lhs: $0, rhs: $1, using: context.folder, cache: valuesCache) }
+            let files = urls.filter { valuesCache[$0]?.isDirectory != true }
+                .sorted { compare(lhs: $0, rhs: $1, using: context.folder, cache: valuesCache) }
+            urls = folders + files
 
             if context.folder.maxItems > 0 {
                 urls = Array(urls.prefix(context.folder.maxItems))
@@ -177,13 +191,25 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
         }
 
         if context.isRoot {
+            // Item count header
+            if case .success(let urls) = result, !urls.isEmpty {
+                let folderCount = urls.filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true }.count
+                let fileCount = urls.count - folderCount
+                var parts: [String] = []
+                if folderCount > 0 { parts.append("\(folderCount) folder\(folderCount == 1 ? "" : "s")") }
+                if fileCount > 0 { parts.append("\(fileCount) file\(fileCount == 1 ? "" : "s")") }
+                let countItem = NSMenuItem(title: parts.joined(separator: ", "), action: nil, keyEquivalent: "")
+                countItem.isEnabled = false
+                menu.insertItem(countItem, at: 0)
+                menu.insertItem(.separator(), at: 1)
+            }
+
             menu.addItem(.separator())
             menu.addItem(makeActionItem(title: "Open in Finder", action: #selector(openInFinder(_:)), representedObject: context.url))
             menu.addItem(makeActionItem(title: "Open in Terminal", action: #selector(openInTerminal(_:)), representedObject: context.url))
             menu.addItem(.separator())
-            let settingsItem = makeActionItem(title: "Settings…", action: #selector(openSettings(_:)), representedObject: nil)
-            settingsItem.target = self
-            menu.addItem(settingsItem)
+            menu.addItem(makeActionItem(title: "Settings\u{2026}", action: #selector(openSettings(_:)), representedObject: nil))
+            menu.addItem(makeActionItem(title: "Quit Quickfiles", action: #selector(quitApp(_:)), representedObject: nil))
         }
     }
 
@@ -191,40 +217,47 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
         let values = try? url.resourceValues(forKeys: [.isDirectoryKey])
         let isDirectory = values?.isDirectory == true
 
-        let item = NSMenuItem(title: url.lastPathComponent, action: nil, keyEquivalent: "")
-        item.image = icon(for: url)
+        let item = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         item.representedObject = url
         item.target = self
 
+        // Use draggable custom view for file/folder items
+        let dragView = DraggableMenuItemView(
+            title: url.lastPathComponent,
+            icon: icon(for: url),
+            fileURL: url,
+            isDirectory: isDirectory
+        )
+        item.view = dragView
+
         if isDirectory {
             item.action = #selector(openFolder(_:))
-            let submenu = NSMenu(title: url.lastPathComponent)
+            let submenu = QuickfilesMenu(title: url.lastPathComponent)
             submenu.autoenablesItems = false
             submenu.delegate = self
+            submenu.menuBuilder = self
             submenu.quickfilesContext = MenuContext(url: url, folder: folderConfig, isRoot: false)
             submenu.addItem(makeActionItem(title: "Open in Finder", action: #selector(openFolder(_:)), representedObject: url))
             submenu.addItem(.separator())
-            let placeholder = NSMenuItem(title: "Loading…", action: nil, keyEquivalent: "")
+            let placeholder = NSMenuItem(title: "Loading\u{2026}", action: nil, keyEquivalent: "")
             placeholder.isEnabled = false
             submenu.addItem(placeholder)
             item.submenu = submenu
         } else {
+            item.action = #selector(openFile(_:))
             item.submenu = buildFileSubmenu(for: url)
         }
 
         return item
     }
 
-    private func buildFileSubmenu(for url: URL) -> NSMenu {
-        let submenu = NSMenu(title: url.lastPathComponent)
+    private func buildFileSubmenu(for url: URL) -> QuickfilesMenu {
+        let submenu = QuickfilesMenu(title: url.lastPathComponent)
         submenu.autoenablesItems = false
+        submenu.menuBuilder = self
 
         submenu.addItem(makeActionItem(title: "Open", action: #selector(openFile(_:)), representedObject: url))
-
-        let previewItem = makeActionItem(title: "Quick Look", action: #selector(quickLookFile(_:)), representedObject: url)
-        previewItem.keyEquivalent = " "
-        previewItem.keyEquivalentModifierMask = []
-        submenu.addItem(previewItem)
+        submenu.addItem(makeActionItem(title: "Quick Look  \u{2423}", action: #selector(quickLookFile(_:)), representedObject: url))
 
         submenu.addItem(.separator())
 
@@ -249,8 +282,9 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
 
     private func makeOpenWithMenu(for url: URL) -> NSMenuItem {
         let item = NSMenuItem(title: "Open With", action: nil, keyEquivalent: "")
-        let submenu = NSMenu(title: "Open With")
+        let submenu = QuickfilesMenu(title: "Open With")
         submenu.autoenablesItems = false
+        submenu.menuBuilder = self
 
         let apps = FileUtils.appsForFile(at: url)
         if apps.isEmpty {
@@ -276,9 +310,11 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
         return item
     }
 
-    nonisolated private static func compare(lhs: URL, rhs: URL, using folder: FolderConfiguration) -> Bool {
-        let lhsValues = try? lhs.resourceValues(forKeys: [.localizedNameKey, .contentModificationDateKey, .creationDateKey, .typeIdentifierKey, .fileSizeKey, .totalFileAllocatedSizeKey])
-        let rhsValues = try? rhs.resourceValues(forKeys: [.localizedNameKey, .contentModificationDateKey, .creationDateKey, .typeIdentifierKey, .fileSizeKey, .totalFileAllocatedSizeKey])
+    // MARK: - Sorting
+
+    nonisolated private static func compare(lhs: URL, rhs: URL, using folder: FolderConfiguration, cache: [URL: URLResourceValues]) -> Bool {
+        let lhsValues = cache[lhs]
+        let rhsValues = cache[rhs]
 
         let comparison: ComparisonResult = {
             switch folder.sortOrder {
@@ -330,66 +366,49 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
     }
 
     private func icon(for url: URL) -> NSImage {
-        let image = NSWorkspace.shared.icon(forFile: url.path)
-        image.size = NSSize(width: 16, height: 16)
-        return image
+        let original = NSWorkspace.shared.icon(forFile: url.path)
+        // Copy to avoid mutating the shared workspace icon cache
+        let copy = original.copy() as! NSImage
+        copy.size = NSSize(width: 16, height: 16)
+        return copy
     }
 
-    @objc private func openFile(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else {
-            return
-        }
+    // MARK: - Actions
 
+    @objc private func openFile(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL else { return }
         NSWorkspace.shared.open(url)
     }
 
     @objc private func quickLookFile(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else {
-            return
-        }
-
+        guard let url = sender.representedObject as? URL else { return }
         showQuickLook(for: url)
     }
 
     @objc private func openFolder(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else {
-            return
-        }
-
+        guard let url = sender.representedObject as? URL else { return }
         NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: url.path)
     }
 
     @objc private func revealInFinder(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else {
-            return
-        }
-
+        guard let url = sender.representedObject as? URL else { return }
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
     @objc private func copyFile(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else {
-            return
-        }
-
+        guard let url = sender.representedObject as? URL else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.writeObjects([url as NSURL])
     }
 
     @objc private func copyPath(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else {
-            return
-        }
-
+        guard let url = sender.representedObject as? URL else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(url.path, forType: .string)
     }
 
     @objc private func moveToTrash(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else {
-            return
-        }
-
+        guard let url = sender.representedObject as? URL else { return }
         do {
             try FileManager.default.trashItem(at: url, resultingItemURL: nil)
         } catch {
@@ -399,27 +418,18 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
     }
 
     @objc private func openFileWithApp(_ sender: NSMenuItem) {
-        guard let context = sender.representedObject as? OpenWithContext else {
-            return
-        }
-
+        guard let context = sender.representedObject as? OpenWithContext else { return }
         let configuration = NSWorkspace.OpenConfiguration()
         NSWorkspace.shared.open([context.fileURL], withApplicationAt: context.appURL, configuration: configuration) { _, _ in }
     }
 
     @objc private func openInFinder(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else {
-            return
-        }
-
+        guard let url = sender.representedObject as? URL else { return }
         NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: url.path)
     }
 
     @objc private func openInTerminal(_ sender: NSMenuItem) {
-        guard let url = sender.representedObject as? URL else {
-            return
-        }
-
+        guard let url = sender.representedObject as? URL else { return }
         let escapedPath = url.path.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
         let script = "tell application \"Terminal\"\nactivate\ndo script \"cd \\\"\(escapedPath)\\\"\"\nend tell"
         if let appleScript = NSAppleScript(source: script) {
@@ -431,7 +441,34 @@ final class MenuBuilder: NSObject, NSMenuDelegate {
     @objc private func openSettings(_ sender: NSMenuItem) {
         SettingsWindowController.shared.showSettings()
     }
+
+    @objc private func quitApp(_ sender: NSMenuItem) {
+        NSApp.terminate(nil)
+    }
 }
+
+// MARK: - QuickfilesMenu — custom NSMenu that intercepts Space for Quick Look
+
+/// Subclass of NSMenu that intercepts Space bar during menu tracking.
+/// `performKeyEquivalent` IS called during NSMenu's tracking loop, unlike
+/// `NSEvent.addLocalMonitorForEvents` which Apple explicitly excludes from menu tracking.
+/// Returning `true` consumes the event — the menu stays open.
+@MainActor
+final class QuickfilesMenu: NSMenu {
+    weak var menuBuilder: MenuBuilder?
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        // Intercept Space (keyCode 49) with no modifiers
+        if event.keyCode == 49, event.modifierFlags.intersection(.deviceIndependentFlagsMask).isEmpty {
+            if let builder = menuBuilder, builder.handleSpaceKey(in: self) {
+                return true // consumed — menu stays open
+            }
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+}
+
+// MARK: - Supporting Types
 
 private struct MenuContext {
     let url: URL
@@ -445,13 +482,13 @@ private struct OpenWithContext {
 }
 
 private extension NSImage {
-    func resized(to size: NSSize) -> NSImage {
-        let image = NSImage(size: size)
-        image.lockFocus()
-        draw(in: NSRect(origin: .zero, size: size))
-        image.unlockFocus()
-        image.isTemplate = isTemplate
-        return image
+    func resized(to targetSize: NSSize) -> NSImage {
+        let newImage = NSImage(size: targetSize, flipped: false) { rect in
+            self.draw(in: rect)
+            return true
+        }
+        newImage.isTemplate = isTemplate
+        return newImage
     }
 }
 
@@ -475,7 +512,7 @@ private final class QuickLookFloatingWindow: NSPanel {
     private let previewView: QLPreviewView
 
     init() {
-        previewView = QLPreviewView(frame: .zero, style: .compact)!
+        previewView = QLPreviewView(frame: .zero, style: .compact) ?? QLPreviewView(frame: .zero)
         let size = NSSize(width: 500, height: 400)
         super.init(
             contentRect: NSRect(origin: .zero, size: size),
@@ -510,7 +547,6 @@ private final class QuickLookFloatingWindow: NSPanel {
         title = url.lastPathComponent
 
         if !isVisible {
-            // Center on the screen with the menu bar
             if let screen = NSScreen.main {
                 let screenFrame = screen.visibleFrame
                 let windowSize = frame.size
