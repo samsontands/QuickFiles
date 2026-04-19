@@ -139,14 +139,31 @@ extension NSColor {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "#", with: "")
 
-        guard normalized.count == 6, let hex = Int(normalized, radix: 16) else {
+        guard let hex = UInt64(normalized, radix: 16) else {
             return nil
         }
 
-        let red = CGFloat((hex >> 16) & 0xFF) / 255.0
-        let green = CGFloat((hex >> 8) & 0xFF) / 255.0
-        let blue = CGFloat(hex & 0xFF) / 255.0
-        self.init(red: red, green: green, blue: blue, alpha: 1)
+        let red: CGFloat
+        let green: CGFloat
+        let blue: CGFloat
+        let alpha: CGFloat
+
+        switch normalized.count {
+        case 6:
+            red = CGFloat((hex >> 16) & 0xFF) / 255.0
+            green = CGFloat((hex >> 8) & 0xFF) / 255.0
+            blue = CGFloat(hex & 0xFF) / 255.0
+            alpha = 1
+        case 8:
+            red = CGFloat((hex >> 24) & 0xFF) / 255.0
+            green = CGFloat((hex >> 16) & 0xFF) / 255.0
+            blue = CGFloat((hex >> 8) & 0xFF) / 255.0
+            alpha = CGFloat(hex & 0xFF) / 255.0
+        default:
+            return nil
+        }
+
+        self.init(red: red, green: green, blue: blue, alpha: alpha)
     }
 
     var hexString: String {
@@ -157,6 +174,11 @@ extension NSColor {
         let red = Int(round(rgb.redComponent * 255))
         let green = Int(round(rgb.greenComponent * 255))
         let blue = Int(round(rgb.blueComponent * 255))
-        return String(format: "#%02X%02X%02X", red, green, blue)
+        let alpha = Int(round(rgb.alphaComponent * 255))
+
+        if alpha == 255 {
+            return String(format: "#%02X%02X%02X", red, green, blue)
+        }
+        return String(format: "#%02X%02X%02X%02X", red, green, blue, alpha)
     }
 }
