@@ -106,15 +106,22 @@ struct FolderConfiguration: Codable, Identifiable, Equatable {
     }
 
     var statusImage: NSImage? {
-        let sizeConfig = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
-        let colorConfig = NSImage.SymbolConfiguration(paletteColors: [nsColor])
-        let config = sizeConfig.applying(colorConfig)
-        guard let image = NSImage(systemSymbolName: iconName, accessibilityDescription: resolvedTitle)?
+        let config = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        guard let symbol = NSImage(systemSymbolName: iconName, accessibilityDescription: resolvedTitle)?
             .withSymbolConfiguration(config) else {
             return nil
         }
-        image.isTemplate = false
-        return image
+        symbol.isTemplate = true
+
+        let tint = nsColor
+        let tinted = NSImage(size: symbol.size, flipped: false) { rect in
+            symbol.draw(in: rect)
+            tint.set()
+            rect.fill(using: .sourceAtop)
+            return true
+        }
+        tinted.isTemplate = false
+        return tinted
     }
 }
 
