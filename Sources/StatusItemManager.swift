@@ -89,15 +89,19 @@ final class StatusItemManager: NSObject {
         button.identifier = NSUserInterfaceItemIdentifier(folder.id.uuidString)
 
         let title = " \(folder.resolvedTitle)"
+        let titleAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: folder.nsColor,
+            .font: NSFont.menuBarFont(ofSize: 0),
+        ]
         switch folder.displayMode {
         case .icon:
-            button.title = ""
+            button.attributedTitle = NSAttributedString(string: "")
             button.image = folder.statusImage
         case .title:
-            button.title = folder.resolvedTitle
+            button.attributedTitle = NSAttributedString(string: folder.resolvedTitle, attributes: titleAttributes)
             button.image = nil
         case .iconAndTitle:
-            button.title = title
+            button.attributedTitle = NSAttributedString(string: title, attributes: titleAttributes)
             button.image = folder.statusImage
         }
 
