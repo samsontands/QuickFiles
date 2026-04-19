@@ -106,12 +106,14 @@ struct FolderConfiguration: Codable, Identifiable, Equatable {
     }
 
     var statusImage: NSImage? {
-        let config = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        let sizeConfig = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+        let colorConfig = NSImage.SymbolConfiguration(paletteColors: [nsColor])
+        let config = sizeConfig.applying(colorConfig)
         guard let image = NSImage(systemSymbolName: iconName, accessibilityDescription: resolvedTitle)?
             .withSymbolConfiguration(config) else {
             return nil
         }
-        image.isTemplate = true
+        image.isTemplate = false
         return image
     }
 }
